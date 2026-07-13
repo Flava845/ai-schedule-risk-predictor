@@ -1,0 +1,47 @@
+{
+  "accuracy": 0.775,
+  "report": {
+    "High": {
+      "precision": 0.8717948717948718,
+      "recall": 0.7083333333333334,
+      "f1-score": 0.7816091954022989,
+      "support": 48.0
+    },
+    "Low": {
+      "precision": 0.8543689320388349,
+      "recall": 0.8148148148148148,
+      "f1-score": 0.8341232227488151,
+      "support": 108.0
+    },
+    "Medium": {
+      "precision": 0.6530612244897959,
+      "recall": 0.7619047619047619,
+      "f1-score": 0.7032967032967034,
+      "support": 84.0
+    },
+    "accuracy": 0.775,
+    "macro avg": {
+      "precision": 0.7930750094411675,
+      "recall": 0.7616843033509699,
+      "f1-score": 0.7730097071492725,
+      "support": 240.0
+    },
+    "weighted avg": {
+      "precision": 0.7873964223478787,
+      "recall": 0.775,
+      "f1-score": 0.7778311354712727,
+      "support": 240.0
+    }
+  },
+  "feature_importances": {
+    "days_until_deadline": 0.1028,
+    "percent_complete": 0.0491,
+    "expected_percent_complete": 0.1539,
+    "progress_gap": 0.2501,
+    "num_dependencies": 0.0426,
+    "num_dependencies_incomplete": 0.1939,
+    "resource_availability_pct": 0.0838,
+    "team_workload_score": 0.111,
+    "past_delays_count": 0.0129
+  }
+}
