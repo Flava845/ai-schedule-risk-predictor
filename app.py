@@ -18,6 +18,7 @@ from model.predictor import predict_batch, predict_task
 
 HERE = os.path.dirname(__file__)
 SAMPLE_DATA_PATH = os.path.join(HERE, "data", "tasks_synthetic.csv")
+FEEDBACK_PATH = os.path.join(HERE, "data", "feedback_log.csv")
 
 # Fixed status palette (good / warning / critical) — chosen for contrast and
 # colorblind-safe separation rather than arbitrary hues, since risk level is
@@ -110,6 +111,17 @@ def stat_tile(label: str, value, icon: str = "", accent: str = ACCENT) -> str:
     """
 
 
+def save_feedback(name: str, rating: str, comment: str) -> None:
+    row = pd.DataFrame([{
+        "timestamp": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "name": name,
+        "rating": rating,
+        "comment": comment,
+    }])
+    write_header = not os.path.exists(FEEDBACK_PATH)
+    row.to_csv(FEEDBACK_PATH, mode="a", header=write_header, index=False)
+
+
 st.markdown(
     """
     <div class="hero-row">
@@ -125,7 +137,9 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-tab_single, tab_batch, tab_about = st.tabs(["🔍 Assess a Task", "📊 Project Portfolio", "ℹ️ About"])
+tab_single, tab_batch, tab_feedback, tab_about = st.tabs(
+    ["🔍 Assess a Task", "📊 Project Portfolio", "💬 Feedback", "ℹ️ About"]
+)
 
 
 # ---------------------------------------------------------------- single task
@@ -325,6 +339,37 @@ with tab_batch:
                 data=scored.to_csv(index=False).encode("utf-8"),
                 file_name="scored_tasks.csv",
                 mime="text/csv",
+            )
+
+
+# ---------------------------------------------------------------- feedback
+with tab_feedback:
+    with st.container(border=True):
+        st.markdown("##### We'd love your feedback")
+        st.caption("Tell us what you liked, what felt confusing, or what you'd want to see next.")
+        with st.form("feedback_form", clear_on_submit=True):
+            name = st.text_input("Your name (optional)")
+            rating = st.radio(
+                "Overall impression", ["😊 Like it", "😐 It's okay", "😞 Needs work"], horizontal=True
+            )
+            comment = st.text_area("What would you improve, or what did you like?", height=120)
+            submitted = st.form_submit_button("Submit feedback", type="primary")
+
+        if submitted:
+            if not comment.strip():
+                st.warning("Please add a short comment before submitting.")
+            else:
+                save_feedback(name.strip() or "Anonymous", rating, comment.strip())
+                st.success("Thanks! Your feedback has been recorded.")
+
+    if os.path.exists(FEEDBACK_PATH):
+        st.write("")
+        with st.container(border=True):
+            st.markdown("##### Recent feedback")
+            fb_df = pd.read_csv(FEEDBACK_PATH)
+            st.dataframe(
+                fb_df.sort_values("timestamp", ascending=False),
+                width="stretch", hide_index=True,
             )
 
 
