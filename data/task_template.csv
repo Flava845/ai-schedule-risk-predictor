@@ -1,0 +1,4 @@
+task_id,task_name,days_until_deadline,percent_complete,expected_percent_complete,num_dependencies,num_dependencies_incomplete,resource_availability_pct,team_workload_score,past_delays_count
+EXAMPLE-1,Draft literature review,10,50,60,2,1,70,4,0
+EXAMPLE-2,Build prototype UI,2,40,85,3,2,50,7,1
+EXAMPLE-3,Prepare final presentation,-1,60,100,1,0,80,5,2
