@@ -21,71 +21,104 @@ SAMPLE_DATA_PATH = os.path.join(HERE, "data", "tasks_synthetic.csv")
 
 # Fixed status palette (good / warning / critical) — chosen for contrast and
 # colorblind-safe separation rather than arbitrary hues, since risk level is
-# a state, not a category.
+# a state, not a category. text_on_solid is chosen per-color so the solid
+# chip always has real contrast (white on the darker green/red, near-black
+# on the bright amber).
 RISK_META = {
-    "Low": {"color": "#0ca30c", "icon": "✅", "chip": "Low risk"},
-    "Medium": {"color": "#fab219", "icon": "⚠️", "chip": "Medium risk"},
-    "High": {"color": "#d03b3b", "icon": "🚨", "chip": "High risk"},
+    "Low": {"color": "#0ca30c", "on_solid": "#ffffff", "icon": "✅", "chip": "Low risk"},
+    "Medium": {"color": "#fab219", "on_solid": "#3d2b00", "icon": "⚠️", "chip": "Medium risk"},
+    "High": {"color": "#d03b3b", "on_solid": "#ffffff", "icon": "🚨", "chip": "High risk"},
 }
 RISK_COLORS = {k: v["color"] for k, v in RISK_META.items()}
 INK_PRIMARY = "#0b0b0b"
 INK_SECONDARY = "#52514e"
+ACCENT = "#2a78d6"
+PAGE_BG = "#eef0f3"
 
 st.set_page_config(page_title="AI Schedule Risk Predictor", page_icon="⏱️", layout="wide")
 
-CUSTOM_CSS = """
+CUSTOM_CSS = f"""
 <style>
-.block-container { padding-top: 2.5rem; padding-bottom: 3rem; }
+.stApp {{ background: {PAGE_BG}; }}
+.block-container {{ padding-top: 2.5rem; padding-bottom: 3rem; }}
 
-.hero-title { font-size: 2.1rem; font-weight: 800; color: #0b0b0b; margin-bottom: 0.15rem; }
-.hero-sub { font-size: 1rem; color: #52514e; margin-bottom: 1.6rem; }
+.hero-row {{ display: flex; align-items: center; gap: 16px; margin-bottom: 0.3rem; }}
+.hero-logo {{
+    width: 52px; height: 52px; border-radius: 14px; flex-shrink: 0;
+    background: {ACCENT}1f; border: 1px solid {ACCENT}40;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+}}
+.hero-title {{ font-size: 2rem; font-weight: 800; color: {INK_PRIMARY}; line-height: 1.15; }}
+.hero-sub {{ font-size: 1rem; color: {INK_SECONDARY}; margin: 0.5rem 0 1.6rem; }}
 
-.card {
-    background: #fcfcfb;
-    border: 1px solid rgba(11,11,11,0.10);
+.card {{
+    background: #ffffff;
+    border: 1px solid rgba(11,11,11,0.07);
     border-radius: 14px;
     padding: 22px 24px;
-}
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03), 0 6px 16px rgba(11,11,11,0.05);
+}}
 
-.stat-tile {
-    background: #fcfcfb;
-    border: 1px solid rgba(11,11,11,0.10);
+.stat-tile {{
+    background: #ffffff;
+    border: 1px solid rgba(11,11,11,0.07);
     border-radius: 12px;
     padding: 18px 20px;
     height: 100%;
-}
-.stat-tile .stat-label {
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03), 0 6px 16px rgba(11,11,11,0.05);
+}}
+.stat-tile .stat-icon {{
+    width: 34px; height: 34px; border-radius: 9px; font-size: 16px;
+    display: flex; align-items: center; justify-content: center; margin-bottom: 10px;
+}}
+.stat-tile .stat-label {{
     font-size: 12.5px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase;
-    color: #52514e; display: flex; align-items: center; gap: 6px;
-}
-.stat-tile .stat-value { font-size: 30px; font-weight: 800; color: #0b0b0b; margin-top: 6px; }
+    color: {INK_SECONDARY};
+}}
+.stat-tile .stat-value {{ font-size: 32px; font-weight: 800; color: {INK_PRIMARY}; margin-top: 4px; }}
 
-.risk-badge { border-radius: 16px; padding: 30px 22px; text-align: center; }
-.risk-badge .eyebrow { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: #52514e; }
-.risk-badge .task-name { font-size: 16px; font-weight: 700; color: #0b0b0b; margin: 6px 0 16px; }
-.risk-badge .level { font-size: 40px; font-weight: 800; color: #0b0b0b; line-height: 1.1; }
+.risk-badge {{
+    background: #ffffff; border: 1px solid rgba(11,11,11,0.07); border-radius: 16px;
+    padding: 28px 22px; text-align: center;
+    box-shadow: 0 1px 2px rgba(11,11,11,0.03), 0 6px 16px rgba(11,11,11,0.05);
+}}
+.risk-badge .eyebrow {{ font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: uppercase; color: {INK_SECONDARY}; }}
+.risk-badge .task-name {{ font-size: 16px; font-weight: 700; color: {INK_PRIMARY}; margin: 6px 0 18px; }}
+.risk-chip {{
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 28px; border-radius: 999px; font-size: 26px; font-weight: 800;
+}}
 
-.reason-row, .action-row {
+.reason-row, .action-row {{
     display: flex; gap: 10px; align-items: flex-start;
-    padding: 8px 0; border-bottom: 1px solid rgba(11,11,11,0.06);
-    font-size: 14.5px; color: #0b0b0b;
-}
-.reason-row:last-child, .action-row:last-child { border-bottom: none; }
+    padding: 9px 0; border-bottom: 1px solid rgba(11,11,11,0.07);
+    font-size: 14.5px; color: {INK_PRIMARY};
+}}
+.reason-row:last-child, .action-row:last-child {{ border-bottom: none; }}
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
-def stat_tile(label: str, value, icon: str = "") -> str:
+def stat_tile(label: str, value, icon: str = "", accent: str = ACCENT) -> str:
     return f"""
     <div class="stat-tile">
-        <div class="stat-label">{icon} {label}</div>
+        <div class="stat-icon" style="background:{accent}1f;">{icon}</div>
+        <div class="stat-label">{label}</div>
         <div class="stat-value">{value}</div>
     </div>
     """
 
 
-st.markdown('<div class="hero-title">⏱️ AI Schedule Risk Predictor</div>', unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class="hero-row">
+        <div class="hero-logo">⏱️</div>
+        <div class="hero-title">AI Schedule Risk Predictor</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.markdown(
     '<div class="hero-sub">Identify tasks likely to be delayed, based on progress, '
     "dependencies, resources and deadlines — with simple mitigation suggestions.</div>",
@@ -138,16 +171,19 @@ with tab_single:
         with r1:
             st.markdown(
                 f"""
-                <div class="risk-badge" style="background-color:{meta['color']}14;border:1.5px solid {meta['color']}55;">
+                <div class="risk-badge">
                     <div class="eyebrow">Predicted risk for</div>
                     <div class="task-name">{task_name}</div>
-                    <div class="level">{meta['icon']} {level}</div>
+                    <div class="risk-chip" style="background:{meta['color']};color:{meta['on_solid']};">
+                        {meta['icon']} {level}
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
             if result["escalated"]:
                 st.warning(f"Escalated from ML prediction ({result['ml_level']}) by rule guardrails.")
+            st.write("")
             st.markdown(
                 stat_tile("ML model confidence", f"{max(result['ml_probabilities'].values()):.0%}", "🎯"),
                 unsafe_allow_html=True,
@@ -167,7 +203,7 @@ with tab_single:
             fig.update_traces(textfont_color=INK_PRIMARY, textposition="outside")
             fig.update_layout(
                 showlegend=False, height=280, margin=dict(t=40, b=10),
-                plot_bgcolor="#fcfcfb", paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="#ffffff", paper_bgcolor="rgba(0,0,0,0)",
                 font_color=INK_SECONDARY,
             )
             st.plotly_chart(fig, width="stretch")
@@ -228,9 +264,18 @@ with tab_batch:
         counts = scored["final_level"].value_counts()
         c1, c2, c3, c4 = st.columns(4)
         c1.markdown(stat_tile("Total tasks", len(scored), "📋"), unsafe_allow_html=True)
-        c2.markdown(stat_tile("Low risk", int(counts.get("Low", 0)), RISK_META["Low"]["icon"]), unsafe_allow_html=True)
-        c3.markdown(stat_tile("Medium risk", int(counts.get("Medium", 0)), RISK_META["Medium"]["icon"]), unsafe_allow_html=True)
-        c4.markdown(stat_tile("High risk", int(counts.get("High", 0)), RISK_META["High"]["icon"]), unsafe_allow_html=True)
+        c2.markdown(
+            stat_tile("Low risk", int(counts.get("Low", 0)), RISK_META["Low"]["icon"], RISK_META["Low"]["color"]),
+            unsafe_allow_html=True,
+        )
+        c3.markdown(
+            stat_tile("Medium risk", int(counts.get("Medium", 0)), RISK_META["Medium"]["icon"], RISK_META["Medium"]["color"]),
+            unsafe_allow_html=True,
+        )
+        c4.markdown(
+            stat_tile("High risk", int(counts.get("High", 0)), RISK_META["High"]["icon"], RISK_META["High"]["color"]),
+            unsafe_allow_html=True,
+        )
 
         st.write("")
         pie = px.pie(
